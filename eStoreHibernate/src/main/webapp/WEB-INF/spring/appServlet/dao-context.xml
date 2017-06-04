@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.2.xsd">
+
+	<!-- 애너테이션 기능 활성화 -->
+	<context:annotation-config></context:annotation-config>
+
+	<!-- DAO패키지를 스캔하여 @Repository를 찾아 bean으로 등록 -->
+	<context:component-scan base-package="kr.ac.hansung.cse.dao"></context:component-scan>
+
+	<!-- DataSource에 대한 bean -->
+	<context:property-placeholder
+		location="/WEB-INF/props/jdbc.properties" />
+	
+	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource"
+		destroy-method="close">
+		<property name="driverClassName" value="${jdbc.driverClassName}" />
+		<property name="url" value="${jdbc.url}" />
+		<property name="username" value="${jdbc.username}" />
+		<property name="password" value="${jdbc.password}" />
+	</bean>
+	
+	<!-- Hibernate - SessionFactory 에 대한 Bean을 등록하고
+	dataSourse(ref), packagesToScan, hibernateProperties 속성 등록 -->
+	
+	<bean id="sessionFactory" class="org.springframework.orm.hibernate5.LocalSessionFactoryBean">
+		<property name="dataSource" ref="dataSource"></property>
+		<property name="packagesToScan"> <!-- Domain Model의 Entity Bean들을 테이블로 등록 -->
+			<list>
+				<value>kr.ac.hansung.cse.model</value>
+			</list>
+		</property>
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.dialect">org.hibernate.dialect.MySQLDialect</prop><!-- 어떤 DB? -->
+				<prop key="hibernate.hbm2ddl.auto">update</prop><!-- Test단계에서 스키마 자동생성시 이용. 테이블존재하면 삭제후 다시생성 없으면 그냥 생성. -->
+				<prop key="hibernate.show_sql">false</prop><!-- sql statement를 콘솔에 출력 -->
+				<prop key="hibernate.format_sql">false</prop><!-- sql statement의 출력 형식을 지정 -->
+			</props>
+		</property>
+	</bean>
+	
+	<!-- Transaction Manager 에 대한 Bean을 등록. sessionFactory(ref) 속성 등록 -->
+	<bean id="transactionManager" class="org.springframework.orm.hibernate5.HibernateTransactionManager">
+		<property name="sessionFactory" ref="sessionFactory"></property>
+	</bean>
+	
+	<tx:annotation-driven /> <!-- Transaction Annotation 사용 -->
+	
+</beans>
